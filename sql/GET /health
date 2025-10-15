@@ -1,0 +1,17 @@
+
+---
+
+# Et après ?
+
+1) Va sur **Render** → ton service → **Environment**  
+   - colle tes variables (`DATABASE_URL` OVH, clés S3, etc.)  
+   - **Save** puis **Deploy**
+
+2) Teste :  
+   `https://<ton-service>.onrender.com/health` → doit renvoyer `{ ok: true, ... }`
+
+3) Sur **Vercel** (front) → **Settings → Environment Variables** :  
+   `VITE_API_URL = https://<ton-service>.onrender.com`  
+   → **Redeploy**
+
+Si tu veux, envoie-moi un **screenshot** de ta page GitHub et je vérifie que tout est bon (noms de fichiers, contenu, etc.).
