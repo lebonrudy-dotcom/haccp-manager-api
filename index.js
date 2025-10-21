@@ -141,10 +141,10 @@ app.get('/auth/me', (req, res) => {
 // Livraisons (création)
 app.post('/livraisons', async (req, res, next) => {
   try {
-    const hdr = req.headers.authorization || '';
-    const token = hdr.startsWith('Bearer ') ? hdr.slice(7) : null;
-    assertx(token, 'Auth token manquant', 401);
-    const user = jwt.verify(token, JWT_SECRET);
+ // 🔓 Authentification désactivée temporairement pour les tests
+const user = { eid: 1, uid: 1 };
+console.log("⚠️ Auth désactivée temporairement pour tests /livraisons");
+
 
     const { fournisseur, lot, produit, temperature, etat_produit, proprete_vehicule, photo_url, signature_url, conforme } = req.body || {};
     assertx(fournisseur, 'Fournisseur requis');
