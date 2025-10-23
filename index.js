@@ -232,3 +232,5 @@ app.use((err, _req, res, _next) => {
 });
 
 app.listen(PORT, () => console.log(`HACCP Manager API running on :${PORT}`));
+import livraisonsRoutes from "./routes/livraisons.js";
+app.use("/livraisons", livraisonsRoutes);
