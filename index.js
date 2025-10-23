@@ -15,6 +15,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 const { Pool } = pkg;
 const app = express();
 app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true }));
 app.use(morgan('tiny'));
 
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
