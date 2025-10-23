@@ -1,80 +1,83 @@
 import express from "express";
-import multer from "multer";
-import path from "path";
-import fs from "fs";
 import pkg from "pg";
 const { Pool } = pkg;
 
 const router = express.Router();
 
-// Connexion à la base PostgreSQL via Render
+// Connexion à la base PostgreSQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
 });
 
-// 📸 Configuration du stockage temporaire des photos
-const upload = multer({
-  dest: "uploads/",
-  limits: { fileSize: 5 * 1024 * 1024 }, // max 5 Mo
-});
-
 // ➕ POST /livraisons : créer une nouvelle livraison
-router.post("/", upload.single("photo"), async (req, res) => {
+router.post("/", async (req, res, next) => {
   try {
-    const { fournisseur, produit, temperature, conforme, utilisateur_id, entreprise_id } = req.body;
+    // 🔧 Accepte req.body (JSON/form) ou req.query (URL)
+    const src = (req.body && Object.keys(req.body).length) ? req.body : req.query;
+    console.log("📦 Données reçues /livraisons:", src);
 
-    if (!fournisseur || !produit || !temperature) {
-      return res.status(400).json({ error: "Champs requis manquants" });
+    // Normalisation des champs
+    const fournisseur        = src.fournisseur ?? src.Fournisseur ?? null;
+    const lot                = src.lot ?? null;
+    const produit            = src.produit ?? src.Produit ?? null;
+    const temperature        = src.temperature ? Number(src.temperature) : null;
+    const etat_produit       = src.etat_produit ?? 'conforme';
+    const proprete_vehicule  = src.proprete_vehicule ?? 'propre';
+    const photo_url          = src.photo_url ?? null;
+    const signature_url      = src.signature_url ?? null;
+    const conforme           = (src.conforme !== undefined)
+                                  ? (String(src.conforme).toLowerCase() !== 'false')
+                                  : true;
+
+    // Vérif du champ principal
+    if (!fournisseur) {
+      return res.status(400).json({ error: 'Fournisseur requis', body_recu: src });
     }
 
-    // Sauvegarde temporaire de la photo
-    let photo_url = null;
-    if (req.file) {
-      const photoPath = path.join("uploads", req.file.filename);
-      photo_url = photoPath;
-    }
+    // IDs nulls pendant les tests
+    const entreprise_id = null;
+    const utilisateur_id = null;
 
-    // Insertion dans la base
-    const query = `
-      INSERT INTO livraisons 
-      (entreprise_id, utilisateur_id, fournisseur, produit, temperature, conforme, photo_url, date_reception)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+    // Insertion SQL
+    const q = `
+      INSERT INTO livraisons
+        (entreprise_id, utilisateur_id, fournisseur, lot, produit, temperature,
+         etat_produit, proprete_vehicule, photo_url, signature_url, conforme, date_reception)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,NOW())
       RETURNING *;
     `;
-
-    const values = [
-      entreprise_id || null,
-      utilisateur_id || null,
+    const vals = [
+      entreprise_id,
+      utilisateur_id,
       fournisseur,
+      lot,
       produit,
       temperature,
-      conforme || true,
+      etat_produit,
+      proprete_vehicule,
       photo_url,
+      signature_url,
+      conforme
     ];
 
-    const result = await pool.query(query, values);
-    res.status(201).json({ message: "Livraison enregistrée avec succès ✅", data: result.rows[0] });
-  } catch (err) {
-    console.error("Erreur lors de l’ajout de la livraison :", err);
-    res.status(500).json({ error: "Erreur serveur" });
-  }
+    const r = await pool.query(q, vals);
+    return res.status(201).json({ message: "Livraison enregistrée avec succès ✅", data: r.rows[0] });
+  } catch (e) { next(e); }
 });
 
 // 📋 GET /livraisons : liste des livraisons
-router.get("/", async (req, res) => {
+router.get("/", async (req, res, next) => {
   try {
-    const result = await pool.query(`
+    const r = await pool.query(`
       SELECT id, fournisseur, produit, temperature, conforme, photo_url, date_reception
       FROM livraisons
       ORDER BY date_reception DESC
       LIMIT 50;
     `);
-    res.json(result.rows);
-  } catch (err) {
-    console.error("Erreur lors de la récupération :", err);
-    res.status(500).json({ error: "Erreur serveur" });
-  }
+    res.json(r.rows);
+  } catch (e) { next(e); }
 });
 
 export default router;
+
