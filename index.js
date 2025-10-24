@@ -197,17 +197,6 @@ app.post('/livraisons', async (req, res, next) => {
   }
 });
 
-
-    const q = `INSERT INTO livraisons(entreprise_id, utilisateur_id, fournisseur, lot, produit, temperature, etat_produit, proprete_vehicule, photo_url, signature_url, conforme)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-               RETURNING *`;
-    const vals = [user.eid, user.uid, fournisseur, lot||null, produit||null, temperature ?? null,
-                  etat_produit||'conforme', proprete_vehicule||'propre', photo_url||null, signature_url||null, conforme ?? true];
-    const r = await pool.query(q, vals);
-    res.status(201).json(r.rows[0]);
-  } catch (e) { next(e); }
-});
-
 // Livraisons (liste)
 app.get('/livraisons', async (req, res, next) => {
   try {
