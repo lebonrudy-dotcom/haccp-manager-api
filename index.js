@@ -192,7 +192,9 @@ app.post('/livraisons', async (req, res, next) => {
 
     const r = await pool.query(q, vals);
     return res.status(201).json({ message: "Livraison enregistrée avec succès ✅", data: r.rows[0] });
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 });
 
 
