@@ -261,6 +261,42 @@ app.post('/storage/presign', async (req, res, next) => {
     res.json({ putUrl, publicUrl, key });
   } catch (e) { next(e); }
 });
+// Nettoyages — création
+app.post('/nettoyages', async (req, res, next) => {
+  try {
+    const src = (req.body && Object.keys(req.body).length) ? req.body : req.query;
+    console.log("🧽 Données reçues /nettoyages:", src);
+
+    const zone            = src.zone ?? null;
+    const responsable     = src.responsable ?? null;
+    const produit_utilise = src.produit_utilise ?? null;
+    const temperature_eau = src.temperature_eau !== undefined ? Number(src.temperature_eau) : null;
+    const conforme        = (src.conforme !== undefined) ? (String(src.conforme).toLowerCase() !== 'false') : true;
+    const photo_url       = src.photo_url ?? null;
+    const commentaire     = src.commentaire ?? null;
+
+    if (!zone || !responsable) {
+      return res.status(400).json({ error: "Zone et responsable requis", body_recu: src });
+    }
+
+    // Pendant les tests, pas d’auth : on laisse NULL
+    const entreprise_id  = null;
+    const utilisateur_id = null;
+
+    const q = `
+      INSERT INTO nettoyages
+        (entreprise_id, utilisateur_id, zone, responsable, produit_utilise,
+         temperature_eau, conforme, photo_url, commentaire, date_nettoyage)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
+      RETURNING *;
+    `;
+    const vals = [entreprise_id, utilisateur_id, zone, responsable, produit_utilise,
+                  temperature_eau, conforme, photo_url, commentaire];
+
+    const r = await pool.query(q, vals);
+    res.status(201).json({ message: "Nettoyage enregistré avec succès ✅", data: r.rows[0] });
+  } catch (e) { next(e); }
+});
 
 // Errors
 app.use((err, _req, res, _next) => {
