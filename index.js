@@ -11,6 +11,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { MODULE_TEMPLATES } from "./models/modules.js";
 
 const { Pool } = pkg;
 const app = express();
@@ -298,23 +299,6 @@ app.post('/nettoyages', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 // 🧠 Assistant IA — création automatique de modules
-import { MODULE_TEMPLATES } from "./models/modules.js";
-
-app.post("/assistant/create-module", async (req, res, next) => {
-  try {
-    const { module_name } = req.body || {};
-    if (!module_name) return res.status(400).json({ error: "module_name requis" });
-
-    const sql = MODULE_TEMPLATES[module_name.toLowerCase()];
-    if (!sql) return res.status(400).json({ error: "Module inconnu" });
-
-    await pool.query(sql);
-    res.json({ message: `✅ Module '${module_name}' créé avec succès.` });
-  } catch (e) {
-    next(e);
-  }
-});
-import { MODULE_TEMPLATES } from "./models/modules.js";
 
 app.post("/assistant/create-module", async (req, res, next) => {
   try {
