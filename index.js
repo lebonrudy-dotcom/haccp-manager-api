@@ -262,6 +262,7 @@ app.post('/storage/presign', async (req, res, next) => {
     res.json({ putUrl, publicUrl, key });
   } catch (e) { next(e); }
 });
+
 // Nettoyages — création
 app.post('/nettoyages', async (req, res, next) => {
   try {
