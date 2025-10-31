@@ -338,6 +338,54 @@ app.post("/assistant/create-module", async (req, res, next) => {
     next(e);
   }
 });
+// === ZONES (config une fois puis modifiable) ===
+
+// Liste des zones (optionnel: par client_id si tu l’utilises)
+app.get('/zones', async (req, res, next) => {
+  try {
+    const { client_id } = req.query;
+    const q = client_id
+      ? 'SELECT * FROM zones WHERE client_id = $1 ORDER BY id DESC'
+      : 'SELECT * FROM zones ORDER BY id DESC';
+    const vals = client_id ? [client_id] : [];
+    const r = await pool.query(q, vals);
+    res.json(r.rows);
+  } catch (e) { next(e); }
+});
+
+// Créer une zone
+app.post('/zones', async (req, res, next) => {
+  try {
+    const { nom, type_zone, client_id } = req.body || {};
+    if (!nom) return res.status(400).json({ error: 'nom requis' });
+    const r = await pool.query(
+      `INSERT INTO zones(client_id, nom, type_zone) VALUES ($1,$2,$3) RETURNING *`,
+      [client_id ?? null, nom, type_zone ?? null]
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (e) { next(e); }
+});
+
+// Renommer / modifier une zone
+app.patch('/zones/:id', async (req, res, next) => {
+  try {
+    const { nom, type_zone } = req.body || {};
+    const r = await pool.query(
+      `UPDATE zones SET nom = COALESCE($1, nom), type_zone = COALESCE($2, type_zone) WHERE id = $3 RETURNING *`,
+      [nom ?? null, type_zone ?? null, req.params.id]
+    );
+    if (r.rowCount === 0) return res.status(404).json({ error: 'Introuvable' });
+    res.json(r.rows[0]);
+  } catch (e) { next(e); }
+});
+
+// Supprimer une zone
+app.delete('/zones/:id', async (req, res, next) => {
+  try {
+    const r = await pool.query(`DELETE FROM zones WHERE id = $1`, [req.params.id]);
+    res.json({ ok: true, deleted: r.rowCount });
+  } catch (e) { next(e); }
+});
 
 // Errors
 app.use((err, _req, res, _next) => {
