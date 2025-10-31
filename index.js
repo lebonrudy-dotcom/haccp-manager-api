@@ -324,5 +324,24 @@ app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(err.status || 500).json({ error: err.message || 'Erreur serveur' });
 });
+// Route d’accueil - vérifie si l’API et la base fonctionnent
+app.get("/", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT NOW() as time");
+    res.json({
+      ok: true,
+      service: "HACCP Manager API",
+      database: "connected ✅",
+      time: result.rows[0].time
+    });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      service: "HACCP Manager API",
+      database: "❌ not connected",
+      error: err.message
+    });
+  }
+});
 
 app.listen(PORT, () => console.log(`HACCP Manager API running on :${PORT}`));
