@@ -363,5 +363,42 @@ app.get("/", async (req, res) => {
     });
   }
 });
+// ✅ Module températures
+app.post("/temperatures", async (req, res, next) => {
+  try {
+    const { zone_id, temperature, conforme } = req.body || {};
+
+    if (!zone_id || temperature === undefined) {
+      return res.status(400).json({ error: "zone_id et temperature requis" });
+    }
+
+    const q = `
+      INSERT INTO temperatures(zone_id, temperature, conforme)
+      VALUES ($1, $2, $3)
+      RETURNING *;
+    `;
+    const vals = [zone_id, temperature, conforme ?? true];
+    const r = await pool.query(q, vals);
+
+    res.status(201).json({ message: "Relevé enregistré ✅", data: r.rows[0] });
+  } catch (e) {
+    next(e);
+  }
+});
+
+app.get("/temperatures", async (req, res, next) => {
+  try {
+    const r = await pool.query(`
+      SELECT t.*, z.nom AS zone_nom
+      FROM temperatures t
+      LEFT JOIN zones z ON z.id = t.zone_id
+      ORDER BY t.date_releve DESC
+      LIMIT 30;
+    `);
+    res.json(r.rows);
+  } catch (e) {
+    next(e);
+  }
+});
 
 app.listen(PORT, () => console.log(`HACCP Manager API running on :${PORT}`));
