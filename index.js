@@ -386,6 +386,36 @@ app.delete('/zones/:id', async (req, res, next) => {
     res.json({ ok: true, deleted: r.rowCount });
   } catch (e) { next(e); }
 });
+// === TEMPERATURES ===
+app.post("/temperatures", async (req, res, next) => {
+  try {
+    const { zone_id, temperature, conforme, photo_url } = req.body || {};
+    if (!zone_id || temperature === undefined) {
+      return res.status(400).json({ error: "zone_id et temperature requis" });
+    }
+    const q = `
+      INSERT INTO temperatures(zone_id, temperature, conforme, photo_url)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *;
+    `;
+    const vals = [zone_id, Number(temperature), conforme ?? true, photo_url ?? null];
+    const r = await pool.query(q, vals);
+    res.status(201).json({ message: "Relevé enregistré ✅", data: r.rows[0] });
+  } catch (e) { next(e); }
+});
+
+app.get("/temperatures", async (req, res, next) => {
+  try {
+    const r = await pool.query(`
+      SELECT t.*, z.nom AS zone_nom
+      FROM temperatures t
+      LEFT JOIN zones z ON z.id = t.zone_id
+      ORDER BY t.date_releve DESC
+      LIMIT 50
+    `);
+    res.json(r.rows);
+  } catch (e) { next(e); }
+});
 
 // Errors
 app.use((err, _req, res, _next) => {
