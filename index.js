@@ -50,6 +50,26 @@ app.get('/health', (_req, res) => res.json({
   ok: true, name: 'HACCP Manager API', by: 'LA CAMPANELLA CONCEPT',
   ts: new Date().toISOString()
 }));
+// Vérifie la connexion à la base de données PostgreSQL
+app.get('/health/db', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json({
+      ok: true,
+      service: "API Gestionnaire HACCP",
+      database: "connecté ✅",
+      time: result.rows[0].now
+    });
+  } catch (err) {
+    console.error("Erreur de connexion PostgreSQL :", err);
+    res.status(500).json({
+      ok: false,
+      service: "API Gestionnaire HACCP",
+      database: "❌ Erreur de connexion",
+      error: err.message
+    });
+  }
+});
 
 // Auth: register (crée l’entreprise + admin)
 app.post('/auth/register', async (req, res, next) => {
