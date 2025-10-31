@@ -1,0 +1,40 @@
+# ========================
+# HACCP Manager – API
+# Fichier .gitignore
+# ========================
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Build / Cache
+dist/
+build/
+.cache/
+.tmp/
+
+# Environment
+.env
+.env.local
+.env.production
+.env.development
+
+# Logs
+logs/
+*.log
+debug.log
+*.pid
+*.seed
+*.pid.lock
+
+# OS / IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Misc
+coverage/
+*.tgz
